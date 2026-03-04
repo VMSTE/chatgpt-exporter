@@ -1,48 +1,104 @@
-# Chrome Web Store Listing
+# Chrome Web Store Listing (SEO-optimized)
 
-## Name
-ChatGPT Exporter — Export Conversations to PDF, Markdown & More
+## Target Keywords (by volume)
 
-## Short Description (132 chars max)
-Export ChatGPT conversations as PDF, Markdown, Text, CSV, JSON. Free, open-source, 100% local.
+| Keyword | Volume |
+|---------|--------|
+| chatgpt export | 2,400 |
+| export chatgpt conversation | 1,000 |
+| export chatgpt conversation to pdf | 720 |
+| chatgpt export chat | 720 |
+| chatgpt export chat to pdf | 390 |
+| chatgpt exporter chrome extension | 210 |
+| chatgpt export conversation | 210 |
+| download chatgpt chat | — |
+| save chatgpt conversation as pdf | 40 |
+| chatgpt data export | — |
+
+---
+
+## Name (max 75 chars)
+```
+ChatGPT Exporter — Export Chat to PDF, Markdown, JSON & CSV
+```
+(59 chars — hits: "chatgpt exporter", "export chat to pdf", "markdown", "json", "csv")
+
+## Short Description (max 132 chars)
+```
+Export ChatGPT conversations to PDF, Markdown, Text, CSV, JSON. Download and save any chat. Free, open-source, 100% local.
+```
+(123 chars — hits: "export chatgpt conversation", "to pdf", "download", "save", "chat", "free")
 
 ## Detailed Description
 
-Export any ChatGPT conversation in one click.
+```
+Export ChatGPT conversations to PDF, Markdown, and 4 more formats — completely free, open-source, and 100% local.
 
-SUPPORTED FORMATS:
-• Markdown (.md) — clean, readable format for notes and documentation
-• Plain Text (.txt) — simple text, opens anywhere
-• JSON (.json) — structured data with roles, timestamps, and metadata
+ChatGPT Exporter is a Chrome extension that lets you export, download, and save any ChatGPT conversation in one click. No subscriptions, no external servers, no data collection.
+
+HOW TO EXPORT CHATGPT CHAT TO PDF:
+1. Install the extension
+2. Open any ChatGPT conversation on chatgpt.com
+3. Click the export button in the conversation header
+4. Select "PDF" — a clean, professional PDF opens in the browser print dialog
+5. Save as PDF — done
+
+EXPORT FORMATS:
+• PDF — professional print-ready document, clean typography, perfect for sharing
+• Markdown (.md) — ideal for notes, Notion, Obsidian, and documentation
+• Plain Text (.txt) — simple, universal text file
+• JSON (.json) — full structured data with roles, timestamps, and metadata
 • CSV (.csv) — spreadsheet-ready, opens in Excel and Google Sheets
-• PDF (.pdf) — professional print-ready document via native print dialog
-• ZIP (.zip) — batch export multiple conversations from a project
+• ZIP (.zip) — batch export multiple conversations from a ChatGPT project
 
 KEY FEATURES:
-• Message selection — pick specific messages with checkboxes and export only what you need
-• Project batch export — select conversations within a ChatGPT project, download as a single ZIP
-• Deep Research — captures search queries, web results, and synthesis from ChatGPT Deep Research mode
-• Text Docs & Canvas — includes attached documents and canvas content
+• Export entire conversation — one click, instant download
+• Select specific messages — pick individual messages with checkboxes, export only what you need
+• Export ChatGPT project — select conversations within a project, download as a single ZIP archive
+• Deep Research support — captures search queries, web results, and synthesis
+• Canvas & Text Docs — includes attached documents and canvas content
+• ChatGPT data export — alternative to the official export, per-conversation
 
-PRIVACY:
-• 100% local — all processing happens in your browser
-• No data sent to external servers
-• No analytics, telemetry, or tracking
-• Open-source — full code available on GitHub
+WORKS WITH:
+• chatgpt.com (new domain)
+• chat.openai.com (legacy domain)
+• All ChatGPT plans: Free, Plus, Team, Enterprise
+• ChatGPT Deep Research conversations
+• ChatGPT Projects with multiple conversations
 
-HOW TO USE:
-1. Open any ChatGPT conversation
-2. Click the export button in the conversation header
-3. Choose your format — the file downloads instantly
+PRIVACY & SECURITY:
+• 100% local processing — nothing leaves your browser
+• Zero data collection — no analytics, no telemetry, no tracking
+• Open-source — full code on GitHub, verify everything yourself
+• No API keys needed — uses your existing ChatGPT session
 
-For selective export, click "Select messages…" to check individual messages before exporting.
+FREQUENTLY ASKED QUESTIONS:
 
-For project batch export, navigate to a project page and click "Select conversations…" to pick which conversations to include.
+Q: How do I export ChatGPT conversations?
+A: Install ChatGPT Exporter, open any conversation, click the export button in the header, choose your format. The file downloads instantly.
 
-Works on chatgpt.com and chat.openai.com.
+Q: Can I export ChatGPT chat to PDF?
+A: Yes. Select "PDF" from the export menu. A beautifully formatted document opens in your browser's print dialog. Choose "Save as PDF" to download.
+
+Q: Can I export specific messages from a conversation?
+A: Yes. Click "Select messages" to enter selection mode. Check the messages you want, then choose your export format from the toolbar.
+
+Q: How do I download all conversations from a ChatGPT project?
+A: Navigate to the project page, click the export button, select "Select conversations…", pick which ones to include, and download as ZIP.
+
+Q: Is ChatGPT Exporter free?
+A: Completely free and open-source. No subscription, no hidden fees, no premium tier.
+
+Q: Is my data safe?
+A: Everything is processed locally in your browser. No data is ever sent to external servers. You can review the source code on GitHub.
+
+Q: Does it work on browsers other than Chrome?
+A: Yes. It works on all Chromium-based browsers: Chrome, Brave, Edge, Arc, Opera.
 
 Website: http://vmste.org/chatgpt-exporter
-Source: https://github.com/VMSTE/chatgpt-exporter
+Source code: https://github.com/VMSTE/chatgpt-exporter
+Report issues: https://github.com/VMSTE/chatgpt-exporter/issues
+```
 
 ---
 
@@ -58,8 +114,8 @@ http://vmste.org/chatgpt-exporter
 ## Privacy Policy
 Not required (no data collection)
 
-Single Purpose Description:
-This extension exports ChatGPT conversations to various file formats (PDF, Markdown, Text, CSV, JSON).
+## Single Purpose Description
+This extension exports ChatGPT conversations to file formats including PDF, Markdown, Text, CSV, and JSON.
 
 ---
 
@@ -69,30 +125,29 @@ This extension exports ChatGPT conversations to various file formats (PDF, Markd
 Required to access the current ChatGPT tab and read conversation content for export. The extension only activates on chatgpt.com and chat.openai.com.
 
 ### scripting
-Required to inject the export button UI into the ChatGPT page interface. The button appears in the conversation header and provides the export menu.
+Required to inject the export button into the ChatGPT page. The button appears in the conversation header and provides the format selection menu.
 
 ### tabs
-Required to open the welcome page (vmste.org/chatgpt-exporter) when the extension is first installed. Not used for any other purpose.
+Required to open the welcome page when the extension is first installed. Not used for any other purpose.
 
 ### Host permissions (chatgpt.com, chat.openai.com)
-Required to access ChatGPT's internal conversation API to fetch conversation data (messages, metadata, timestamps) for export. The extension uses the user's existing authenticated session — no external API keys or authentication is needed.
+Required to access ChatGPT's conversation API to fetch message data (text, roles, timestamps) for export. Uses the user's existing authenticated session — no external API keys needed.
 
 ---
 
 ## Required Assets
 
 ### Icon
-✅ 128x128 — assets/icon128.png (already included)
+128x128 — assets/icon128.png (included)
 
-### Screenshots (1280x800 or 640x400)
-You need to create at least 1 screenshot (recommended 3-5):
+### Screenshots (1280x800 or 640x400, min 1, recommended 3-5)
 
-1. **Export menu** — showing the dropdown with all format options on a ChatGPT conversation
-2. **Message selection** — showing checkboxes on messages with the floating toolbar
-3. **Project batch export** — showing the conversation selection modal
-4. **PDF output** — showing the clean, professional PDF result
-5. **Popup** — showing the extension popup with conversation info
+1. **Export menu dropdown** — all format options visible on a ChatGPT conversation
+2. **Message selection mode** — checkboxes on messages + floating export toolbar
+3. **Project conversation picker** — modal with conversation list and format buttons
+4. **PDF result** — the clean, professional PDF document output
+5. **Before/after** — ChatGPT page → exported file side by side
 
 ### Promotional tiles (optional)
-- Small promo tile: 440x280
-- Large promo tile: 920x680
+- Small: 440x280
+- Large: 920x680

@@ -2,7 +2,7 @@
 
 Export any ChatGPT conversation in one click. PDF, Markdown, plain text, CSV, JSON — all processed locally in your browser.
 
-**[Official Website](http://vmste.org/chatgpt-exporter)** &nbsp;|&nbsp; **[Chrome Web Store](#)** &nbsp;|&nbsp; **[Report an Issue](https://github.com/VMSTE/chatgpt-exporter/issues)**
+**[Official Website](https://vmste.org/chatgpt-exporter)** &nbsp;|&nbsp; **[Chrome Web Store](#)** &nbsp;|&nbsp; **[Report an Issue](https://github.com/VMSTE/chatgpt-exporter/issues)**
 
 ---
 

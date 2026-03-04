@@ -1,6 +1,6 @@
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
-    chrome.tabs.create({ url: 'http://vmste.org/chatgpt-exporter' });
+    chrome.tabs.create({ url: 'https://vmste.org/chatgpt-exporter' });
   }
 });
 
