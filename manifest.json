@@ -18,6 +18,9 @@
       "128": "assets/icon128.png"
     }
   },
+  "background": {
+    "service_worker": "background.js"
+  },
   "permissions": ["activeTab", "scripting", "tabs"],
   "host_permissions": [
     "https://chatgpt.com/*",
