@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ChatGPT Exporter — Export Chat to PDF, Markdown, JSON & CSV",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Export ChatGPT conversations to PDF, Markdown, Text, CSV, JSON. Download and save any chat. Free, open-source, 100% local.",
   "icons": {
     "16": "assets/icon16.png",
