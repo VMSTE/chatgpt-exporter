@@ -1514,6 +1514,32 @@ ${msgs}
   new MutationObserver(onMutation)
     .observe(document.documentElement, { childList: true, subtree: true });
 
+  /* ── Popup bridge ──────────────────────────────────────────────────────────
+   * popup.js owns no export logic — it forwards requests here so the in-page
+   * exporter is the single source of truth (fetch, parse, formats, download).
+   *   { type:'cgx-status' }            → { ok, title, count } | { ok:false }
+   *   { type:'cgx-export', fmt }       → { ok, title, count } | { ok:false, error }
+   * ─────────────────────────────────────────────────────────────────────── */
+  chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+    if (!msg || (msg.type !== 'cgx-status' && msg.type !== 'cgx-export')) return;
+    (async () => {
+      try {
+        const convId = getConvId();
+        if (!convId) { sendResponse({ ok: false, reason: 'no-conv' }); return; }
+        if (msg.type === 'cgx-status') {
+          const conv = parseConv(await fetchConvData(convId));
+          sendResponse({ ok: true, title: conv.title, count: conv.messages.length });
+          return;
+        }
+        const conv = await exportSingle(convId, msg.fmt);
+        sendResponse({ ok: true, title: conv.title, count: conv.messages.length });
+      } catch (e) {
+        sendResponse({ ok: false, reason: 'error', error: e.message });
+      }
+    })();
+    return true; // async sendResponse — keep the channel open
+  });
+
   // Initial attempt
   tryInject();
 })();
