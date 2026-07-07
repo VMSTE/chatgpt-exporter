@@ -1,0 +1,45 @@
+name: Publish to Chrome Web Store
+
+# Fires when you push a version tag, e.g.  git tag v1.0.2 && git push --tags
+# Requires 4 repo secrets (Settings → Secrets and variables → Actions):
+#   CHROME_EXTENSION_ID   — item ID from the Web Store dashboard URL
+#   CHROME_CLIENT_ID      — OAuth client ID (Google Cloud, Chrome Web Store API)
+#   CHROME_CLIENT_SECRET  — OAuth client secret
+#   CHROME_REFRESH_TOKEN  — one-time-generated refresh token
+# See the release notes in README for how to mint the refresh token.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify tag matches manifest version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          MANIFEST=$(node -p "require('./manifest.json').version")
+          if [ "$TAG" != "$MANIFEST" ]; then
+            echo "::error::Tag v$TAG does not match manifest version $MANIFEST"; exit 1
+          fi
+          echo "Releasing v$MANIFEST"
+
+      - name: Build ZIP
+        run: |
+          bash scripts/build-zip.sh
+          # Copy to a fixed path the upload action can reference.
+          cp "dist/chatgpt-exporter-v${GITHUB_REF_NAME#v}.zip" dist/extension.zip
+
+      - name: Upload & publish
+        uses: mnao305/chrome-extension-upload@v5.0.0
+        with:
+          file-path: dist/extension.zip
+          extension-id: ${{ secrets.CHROME_EXTENSION_ID }}
+          client-id: ${{ secrets.CHROME_CLIENT_ID }}
+          client-secret: ${{ secrets.CHROME_CLIENT_SECRET }}
+          refresh-token: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          publish: true
