@@ -58,16 +58,35 @@
     return r.json();
   }
 
-  // For project/GPT conversations the endpoint may differ — try multiple
+  // Since 21 Aug 2026 the client loads a conversation from the plural path:
+  // GET /backend-api/conversations/{id}?num_turns=100 → paginated messages[].
+  // The singular /conversation/{id} mapping tree 404s on the new UI.
+  // Older pages come back with &before=<page_info.start_cursor>. num_turns max is 100.
   async function fetchConvData(convId) {
     const session = await getSession();
     const headers = authHeaders(session);
+
+    const modernUrl =
+      `/backend-api/conversations/${encodeURIComponent(convId)}` +
+      `?include_has_versions=true&num_turns=100`;
+    const modern = await fetch(modernUrl, { credentials: 'include', headers });
+    if (modern.ok) {
+      const data = await modern.json();
+      if (Array.isArray(data.messages)) {
+        data.messages = await loadOlderPages(convId, headers, data);
+        return data;
+      }
+      if (data.mapping) return data;
+    } else if (modern.status !== 404) {
+      throw new Error(`API ${modern.status}`);
+    }
+
     const endpoints = [
       `/backend-api/conversation/${convId}`,
       `/backend-api/gizmo_conversation/${convId}`,
       `/backend-api/calpico/chatgpt/rooms/${convId}`,
     ];
-    let lastStatus = null;
+    let lastStatus = modern.status;
     for (const url of endpoints) {
       const r = await fetch(url, { credentials: 'include', headers });
       if (r.ok) return r.json();
@@ -75,6 +94,60 @@
       if (r.status !== 404) throw new Error(`API ${r.status}`);
     }
     throw new Error(`Conversation not found (${lastStatus}). The conversation may belong to a GPT with restricted access.`);
+  }
+
+  function orderByCreateTime(list) {
+    if (!list.some(m => typeof m?.create_time === 'number')) return list;
+    return list
+      .map((m, i) => ({ m, i }))
+      .sort((a, b) => {
+        const ta = typeof a.m.create_time === 'number' ? a.m.create_time : Number.POSITIVE_INFINITY;
+        const tb = typeof b.m.create_time === 'number' ? b.m.create_time : Number.POSITIVE_INFINITY;
+        if (ta !== tb) return ta - tb;
+        return a.i - b.i;
+      })
+      .map(x => x.m);
+  }
+
+  async function loadOlderPages(convId, headers, first) {
+    const pages = [first.messages];
+    let cursor = first.page_info?.has_previous_page ? first.page_info.start_cursor : null;
+    const seenCursors = new Set();
+    while (cursor && !seenCursors.has(cursor) && pages.length < 50) {
+      seenCursors.add(cursor);
+      const q = `include_has_versions=true&num_turns=100&before=${encodeURIComponent(cursor)}`;
+      const urls = [
+        `/backend-api/conversations/${encodeURIComponent(convId)}?${q}`,
+        `/backend-api/conversations/${encodeURIComponent(convId)}/messages?${q}`,
+      ];
+      let page = null;
+      for (const url of urls) {
+        const r = await fetch(url, { credentials: 'include', headers });
+        if (!r.ok) continue;
+        const body = await r.json();
+        const batch = Array.isArray(body) ? body : body.messages;
+        if (!Array.isArray(batch) || batch.length === 0) continue;
+        page = Array.isArray(body) ? { messages: body } : body;
+        break;
+      }
+      if (!page) break;
+      pages.push(page.messages);
+      const next = page.page_info?.has_previous_page ? page.page_info.start_cursor : null;
+      if (!next || next === cursor) break;
+      cursor = next;
+    }
+
+    const merged = [];
+    const seen = new Set();
+    for (let i = pages.length - 1; i >= 0; i--) {
+      for (const m of pages[i]) {
+        if (!m) continue;
+        if (m.id && seen.has(m.id)) continue;
+        if (m.id) seen.add(m.id);
+        merged.push(m);
+      }
+    }
+    return orderByCreateTime(merged);
   }
 
   // Fetch canvas / deep-research documents attached to a conversation
@@ -182,16 +255,22 @@
   /* ── Parse conversation tree → ordered messages ────────────────────────── */
 
   function parseConv(data) {
-    // Walk from current_node back to root, then reverse
+    // New API: flat messages[] already in order. Old API: mapping tree.
     const chain = [];
-    let id = data.current_node;
     const seen = new Set();
-    while (id && !seen.has(id)) {
-      seen.add(id);
-      const node = data.mapping[id];
-      if (!node) break;
-      chain.unshift(node);
-      id = node.parent;
+    const flat = Array.isArray(data.messages) ? data.messages : null;
+
+    if (flat) {
+      for (const m of flat) chain.push({ message: m });
+    } else if (data.mapping) {
+      let id = data.current_node;
+      while (id && !seen.has(id)) {
+        seen.add(id);
+        const node = data.mapping[id];
+        if (!node) break;
+        chain.unshift(node);
+        id = node.parent;
+      }
     }
 
     const messages = [];
@@ -272,7 +351,10 @@
     }
 
     // Off-chain nodes: ct:"code" with response_format_name (structured output)
-    for (const node of Object.values(data.mapping)) {
+    const codeSources = flat
+      ? flat.map(m => ({ message: m }))
+      : Object.values(data.mapping || {});
+    for (const node of codeSources) {
       const m = node.message;
       if (!m) continue;
       if (m.content?.content_type === 'code'
@@ -286,7 +368,7 @@
           } catch {}
         }
         t = decodeUnicodeEscapes(t);
-        if (t.length > 200 && !seen.has(m.id)) {
+        if (t.length > 200 && !seen.has(m.id) && !messages.some(x => x.id === m.id)) {
           seen.add(m.id);
           messages.push({
             id: m.id,
@@ -316,7 +398,10 @@
     let resourcePath = null;
     let timestamp = null;
 
-    for (const node of Object.values(rawData.mapping || {})) {
+    const items = Array.isArray(rawData.messages) && rawData.messages.length
+      ? rawData.messages.map(m => ({ message: m }))
+      : Object.values(rawData.mapping || {});
+    for (const node of items) {
       const m = node.message;
       if (!m) continue;
 
@@ -833,7 +918,7 @@ ${msgs}
       const batch = items.slice(i, i + batchSize);
       const results = await Promise.all(
         batch.map(item =>
-          apiFetch(`/backend-api/conversation/${item.id}`)
+          fetchConvData(item.id)
             .then(async raw => {
               const conv = parseConv(raw);
               conv.textDocs = await fetchTextDocs(item.id);
@@ -900,8 +985,14 @@ ${msgs}
     }
     hideProgress();
 
-    // Find message elements in DOM
-    const articles = document.querySelectorAll('[data-message-id]');
+    // Find message elements in DOM. The new UI sometimes keeps the id only
+    // on the turn wrapper, not on a dedicated [data-message-id] node.
+    let articles = [...document.querySelectorAll('[data-message-id]')];
+    if (!articles.length) {
+      articles = [...document.querySelectorAll('[data-testid^="conversation-turn-"], [data-turn]')]
+        .map(el => el.querySelector('[data-message-id]') || el)
+        .filter(el => el.dataset.messageId || el.getAttribute('data-message-id'));
+    }
     if (!articles.length) {
       alert('[Export] No messages found on this page.');
       _selectionMode = false;
@@ -1046,7 +1137,7 @@ ${msgs}
       const batch = convIds.slice(i, i + batchSize);
       const results = await Promise.all(
         batch.map(id =>
-          apiFetch(`/backend-api/conversation/${id}`)
+          fetchConvData(id)
             .then(async raw => {
               const c = parseConv(raw);
               c.textDocs = await fetchTextDocs(id);
@@ -1451,38 +1542,81 @@ ${msgs}
     return btn;
   }
 
-  // Find the best injection point in the ChatGPT header
+  // Find the best injection point in the ChatGPT header.
+  // The new UI dropped #conversation-header-actions and #page-header,
+  // so we also look for the share / overflow button and, if the header
+  // is gone entirely, park a floating Export control.
   function findTarget() {
-    // Preferred: conversation-header-actions (present on chat pages)
     const convActions = document.getElementById('conversation-header-actions');
     if (convActions) return convActions;
 
-    // Fallback for project home page: right-side cluster in #page-header
     const header = document.getElementById('page-header');
-    if (!header) return null;
-
-    // The right side div contains Share / ... buttons
-    const candidates = header.querySelectorAll('[class*="justify-end"], [class*="items-center"]');
-    for (const el of candidates) {
-      if (el.querySelector('button') && el !== header) return el;
+    if (header) {
+      const candidates = header.querySelectorAll('[class*="justify-end"], [class*="items-center"]');
+      for (const el of candidates) {
+        if (el.querySelector('button') && el !== header) return el;
+      }
     }
-    return null;
+
+    const anchor = document.querySelector(
+      '[data-testid="conversation-options-button"],' +
+      '[data-testid="share-chat-button"],' +
+      '[data-testid="share-button"],' +
+      'button[aria-label="Share"],' +
+      'button[aria-label="Share chat"],' +
+      'button[aria-label="Поделиться"]'
+    );
+    return anchor ? anchor.parentElement : null;
+  }
+
+  function placeBtn(btn, target) {
+    if (target) {
+      btn.style.position = '';
+      btn.style.top = '';
+      btn.style.right = '';
+      btn.style.zIndex = '';
+      btn.style.background = '';
+      btn.style.color = '';
+      btn.style.border = '';
+      btn.style.borderRadius = '';
+      btn.style.padding = '';
+      btn.style.boxShadow = '';
+      target.insertBefore(btn, target.firstChild);
+      return;
+    }
+    const dark = document.documentElement.classList.contains('dark')
+      || matchMedia('(prefers-color-scheme: dark)').matches;
+    Object.assign(btn.style, {
+      position: 'fixed',
+      top: '14px',
+      right: '16px',
+      zIndex: '100000',
+      background: dark ? '#2f2f2f' : '#fff',
+      color: dark ? '#ececec' : '#0d0d0d',
+      border: dark ? '1px solid rgba(255,255,255,0.16)' : '1px solid rgba(0,0,0,0.12)',
+      borderRadius: '999px',
+      padding: '6px 10px',
+      boxShadow: '0 2px 10px rgba(0,0,0,0.12)',
+    });
+    document.body.appendChild(btn);
   }
 
   function tryInject() {
     if (!isOnChatGPT()) return;
-    if (document.getElementById(BTN_ID)) return;
 
     const convId  = getConvId();
     const gizmoId = getGizmoId();
-
-    // Only inject when we have something to export
     if (!convId && !gizmoId) return;
 
     const target = findTarget();
-    if (!target) return;
+    const existing = document.getElementById(BTN_ID);
+    if (existing) {
+      if (target && existing.parentElement !== target) placeBtn(existing, target);
+      return;
+    }
+    if (!target && !document.body) return;
 
-    target.insertBefore(createBtn(convId, gizmoId), target.firstChild);
+    placeBtn(createBtn(convId, gizmoId), target);
   }
 
   /* ── SPA navigation (ChatGPT is a React SPA) ───────────────────────────── */
